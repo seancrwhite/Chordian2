@@ -5,6 +5,7 @@ import android.media.MediaRecorder;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
@@ -42,6 +43,10 @@ public class MainActivity extends AppCompatActivity {
         buttonStopPlayingRecording.setEnabled(false);
 
         random = new Random();
+
+        if(!checkPermission()){
+            requestPermission();
+        }
 
         buttonStart.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -112,6 +117,8 @@ public class MainActivity extends AppCompatActivity {
                 mediaPlayer.start();
                 Toast.makeText(MainActivity.this, "Recording Playing",
                         Toast.LENGTH_LONG).show();
+
+                logMediaLoop();
             }
         });
 
@@ -131,6 +138,12 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    public void logMediaLoop(){
+        while(mediaPlayer.isPlaying()){
+            Log.i("CHORDIAN > ", "Currnt position: " + mediaPlayer.getCurrentPosition());
+        }
     }
 
     public void MediaRecorderReady(){
