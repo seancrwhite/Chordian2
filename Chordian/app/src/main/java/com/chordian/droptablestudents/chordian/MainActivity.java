@@ -1,15 +1,23 @@
 package com.chordian.droptablestudents.chordian;
 
+import android.content.DialogInterface;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.os.Environment;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Random;
 import static android.Manifest.permission.RECORD_AUDIO;
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
@@ -27,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
     String RandomAudioFileName = "ABCDEFGHIJKLMNOP";
     public static final int RequestPermissionCode = 1;
     MediaPlayer mediaPlayer ;
+    ChordBuilder builder;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,6 +100,50 @@ public class MainActivity extends AppCompatActivity {
                 buttonPlayLastRecordAudio.setEnabled(true);
                 buttonStart.setEnabled(true);
                 buttonStopPlayingRecording.setEnabled(false);
+
+                builder = new ChordBuilder();
+                FileInputStream fileStream = null;
+
+                //Convert audio file to byte array
+                try{
+                    File audioFile = new File(AudioSavePathInDevice);
+                    fileStream = new FileInputStream(audioFile);
+                } catch (FileNotFoundException e){
+                    e.printStackTrace();
+                }
+
+                ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+
+                try{
+                    while(fileStream.available() > 0){
+                        byteStream.write(fileStream.read());
+                    }
+                }catch (IOException e){
+                    e.printStackTrace();
+                }
+
+                byte[] bytes = byteStream.toByteArray();
+                int times = (Double.SIZE / Byte.SIZE);
+
+                //Convert byte array to double array
+                double[] frame = new double[bytes.length / times];
+
+                for (int i = 0; i < frame.length; i++){
+                    frame[i] = ByteBuffer.wrap(bytes, i * times, times).getDouble();
+                }
+
+                String chord = builder.buildChord(frame);
+
+                AlertDialog alert = new AlertDialog.Builder(MainActivity.this).create();
+                alert.setTitle("Chord");
+                alert.setMessage(chord);
+                alert.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        });
+                alert.show();
 
                 Toast.makeText(MainActivity.this, "Recording Completed",
                         Toast.LENGTH_LONG).show();
